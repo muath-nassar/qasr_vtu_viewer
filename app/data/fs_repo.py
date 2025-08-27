@@ -31,7 +31,7 @@ class LocalMeshRepository(MeshRepository):
         # File case
         if base.is_file():
             if base.suffix.lower() == ".vtu":
-                return [MeshRef(str(base))]
+                return [MeshRef(str(base), base.name)]
             raise NotVTUFile(str(base))
 
         # Directory case (non-recursive direct children)
@@ -39,7 +39,7 @@ class LocalMeshRepository(MeshRepository):
             meshes: List[MeshRef] = []
             for entry in sorted(base.iterdir()):
                 if entry.is_file() and entry.suffix.lower() == ".vtu":
-                    meshes.append(MeshRef(str(entry.resolve())))
+                    meshes.append(MeshRef(str(entry.resolve()), entry.name))
             return meshes
 
         # Neither file nor directory (rare)

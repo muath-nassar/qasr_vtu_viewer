@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import List
 from app.domain.ports import MeshRepository, Logger
 from app.domain.errors import PathNotFound, NotVTUFile
+from app.domain.types import MeshRef
 
 
 class ImportMeshes:
@@ -11,7 +12,7 @@ class ImportMeshes:
         self._repo = repo
         self._log = log
 
-    def run(self, dir_or_file_path: str) -> List[str]:
+    def run(self, dir_or_file_path: str) -> List[MeshRef]:
         try:
             meshes = self._repo.list_meshes_in(dir_or_file_path)
         except PathNotFound as e:
@@ -20,6 +21,5 @@ class ImportMeshes:
         except NotVTUFile as e:
             self._log.error(f"[UseCase] {e}")
             return []
-        names = [m.path for m in meshes]
-        self._log.info(f"[UseCase] Found {len(names)} VTU files in selection")
-        return names
+        self._log.info(f"[UseCase] Found {len(meshes)} VTU files in selection")
+        return meshes

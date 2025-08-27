@@ -3,6 +3,8 @@ from PySide6.QtCore import QObject, Signal, Property, Slot
 from app.application.import_meshes import ImportMeshes
 from PySide6.QtWidgets import QFileDialog
 
+from app.domain.types import MeshRef
+
 
 class MainViewModel(QObject):
     _changed = Signal()
@@ -10,23 +12,23 @@ class MainViewModel(QObject):
     def __init__(self, import_meshes: ImportMeshes) -> None:
         super().__init__()
         self._import_meshes = import_meshes
-        self._files: List[str] = []
+        self._meshes: List[MeshRef] = []
 
     @Property('QStringList', notify=_changed)
     def files(self) -> List[str]:
-        return self._files
+        print("getting meshes > updated now len = ", len(self._meshes))
+        return [m.name for m in self._meshes]
 
-    # Call this from your dialog result (temporary: pass a path manually)
+    # Call this from your dialog result 
     def get_files(self, dir_path: str) -> None:
-        self._files = self._import_meshes.run(dir_path)
         try:
-            self._files = self._import_meshes.run(dir_path)
+            meshes = self._import_meshes.run(dir_path)
+            self._meshes.extend(m for m in meshes if m not in self._meshes)
         except Exception as exc:
-            self._files = []
             print(f"[VM][ERROR] get_files failed: {exc}")
         finally:
             self._changed.emit()
-            print(f"files = {self._files}")
+            print(f"files = {[m.path for m in self._meshes]}")
 
     @Slot()
     def show_dialog(self):
