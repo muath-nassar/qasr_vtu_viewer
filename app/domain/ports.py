@@ -1,4 +1,4 @@
-from typing import Protocol, Sequence
+from typing import Protocol, Sequence, Any
 from .types import MeshRef
 
 class Logger(Protocol):
@@ -9,3 +9,16 @@ class Logger(Protocol):
 
 class MeshRepository(Protocol):
     def list_meshes_in(self, path: str) -> Sequence[MeshRef]: ...
+
+
+# ↓ NEW rendering ports (VTK-ports)
+class MeshReader(Protocol):
+    """Read a VTU file into an opaque dataset (renderer-agnostic)."""
+    def read_vtu(self, path: str) -> Any: ...
+
+class MeshScene(Protocol):
+    """Owns the 3D scene and mesh actors."""
+    def add_dataset(self, dataset: Any, name: str) -> str: ...
+    def set_visible(self, mesh_id: str, on: bool) -> None: ...
+    def reset_camera(self) -> None: ...
+    def fit_visible(self) -> None: ...

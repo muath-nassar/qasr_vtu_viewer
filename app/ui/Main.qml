@@ -109,11 +109,22 @@ ApplicationWindow {
                     clip: true
                     delegate: ItemDelegate {
                         width: ListView.view.width
-                        text: modelData
-                        highlighted: ListView.isCurrentItem
-                        onClicked: ListView.view.currentIndex = index
+                        contentItem: RowLayout {
+                            spacing: 8
+                            CheckBox {
+                                id: vis
+                                checked: true
+                                onToggled: vm.toggleVisible(index, checked)
+                            }
+                            Label {
+                                text: modelData
+                                Layout.fillWidth: true
+                                elide: Label.ElideRight
+                            }
+                        }
                     }
                 }
+
             }
         }
 
