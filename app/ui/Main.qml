@@ -11,6 +11,33 @@ ApplicationWindow {
     color: "#E6DADA"
     title: "VTU Viewer"
 
+    property string errorMessage: ""
+
+    Dialog {
+        id: errorDialog
+        modal: false
+        standardButtons: Dialog.Ok
+        contentItem: Column {
+            spacing: 8; padding: 16
+            Label { text: errorMessage; wrapMode: Text.WordWrap }
+        }
+
+        // parent to the overlay then center against it
+        parent: Overlay.overlay
+        x: Math.round((parent.width  - width)  / 2)
+        y: Math.round((parent.height - height) / 2)
+    }
+
+
+    // Listen to the VM signal (vm is the contextProperty you set in Python)
+    Connections {
+        target: vm
+        function onErrorOccurred(message){
+            errorMessage = message
+            errorDialog.open()
+            // Optional: console.log("VM error:", message)
+        }
+    }
     // Top toolbar
     header: ToolBar {
         height: 40
@@ -20,9 +47,14 @@ ApplicationWindow {
             anchors.fill: parent
             spacing: 6
             Button { text: "Import VTU file"; onClicked: vm.show_dialog() }
-            Button { text: "Import folder";   onClicked: vm.show_dialog() }
             Item   { Layout.fillWidth: true }
-            Label  { text: vm.statusMessage; color: "#D0C8CB"; elide: Label.ElideRight; Layout.preferredWidth: 280 }
+            Button { text: "Import folder";   onClicked: vm.load_folder(folderPath.text) }
+            TextField {
+                Layout.preferredWidth: 300
+                id: folderPath
+                placeholderText: qsTr("Enter Folder Path")
+            }
+
         }
     }
 
@@ -33,10 +65,17 @@ ApplicationWindow {
         background: Rectangle { color: darkBar }
         RowLayout {
             anchors.fill: parent
-            Label { text: "Status Bar"; color: "white"; Layout.leftMargin: 12 }
+            Label { 
+                text: vm.state
+                font.pixelSize: 14;
+                color: "white"; Layout.leftMargin: 12 
+                 }
             Item  { Layout.fillWidth: true }
         }
     }
+
+    // Message Box for Errors
+
 
     // Main content: left list, center VTK view, right stack
     RowLayout {
@@ -59,7 +98,7 @@ ApplicationWindow {
                 spacing: 8
                 Label {
                     text: "Loaded Files"
-                    color: "#111"
+                    color: "#ffffffff"
                     font.bold: true
                     Layout.alignment: Qt.AlignHCenter
                 }
