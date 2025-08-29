@@ -60,7 +60,7 @@ class MainViewModel(QObject):
     # called from file dialog or by the open folder 
     def get_files(self, dir_path: str) -> None:
         try:
-            meshes = self._import_meshes.run(dir_path)
+            meshes: List[MeshRef] = self._import_meshes.run(dir_path)
             if not meshes:
                 self._show_state("No .vtu files found in selection")
                 self.errorOccurred.emit("No .vtu files found in selection")
@@ -68,6 +68,8 @@ class MainViewModel(QObject):
                 return
 
             for m in meshes:
+                if m in self._meshes_ref:
+                    continue
                 try:
                     self._register_mesh_to_scene(m)
                     self._meshes_ref.append(m)
