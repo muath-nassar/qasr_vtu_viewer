@@ -15,11 +15,10 @@ class ImportMeshes:
     def run(self, dir_or_file_path: str) -> List[MeshRef]:
         try:
             meshes = self._repo.list_meshes_in(dir_or_file_path)
+            self._log.info(f"[ImportMeshes] Found {len(meshes)} VTU files in selection")
+            return meshes
         except PathNotFound as e:
-            self._log.error(f"[UseCase] {e}")
-            return []
+            self._log.error(f"[ImportMeshes] {e}")
         except NotVTUFile as e:
-            self._log.error(f"[UseCase] {e}")
-            return []
-        self._log.info(f"[UseCase] Found {len(meshes)} VTU files in selection")
-        return meshes
+            self._log.error(f"[ImportMeshes] {e}")        
+        return []

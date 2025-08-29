@@ -20,7 +20,7 @@ class AppContainer(containers.DeclarativeContainer):
     repo = providers.Factory(LocalMeshRepository)
     # --- VTK 
     scene = providers.Singleton(VTKScene, log=logger)
-    mesh_reader = providers.Singleton(VTKMeshReader, log=logger)
+    mesh_reader = providers.Singleton(VTKMeshReader, logg=logger)
 
     # Use-cases
     import_meshes = providers.Factory(ImportMeshes, repo=repo, log=logger)
@@ -31,6 +31,7 @@ class AppContainer(containers.DeclarativeContainer):
     # ViewModels
     main_vm = providers.Singleton(
         MainViewModel,
+        log=logger,
         import_meshes=import_meshes,
         load_mesh=load_mesh,
         set_visibility=set_visibility,

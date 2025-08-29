@@ -43,6 +43,7 @@ class VTKScene(MeshScene):
         Attach the VTK render window to this scene.
         This method is called from the VM
         """
+        self._log.info("[VTKScene] attach_render_window")
         self._render_window = rw
         self._render_window.AddRenderer(self._renderer)
         self._render()
@@ -54,6 +55,7 @@ class VTKScene(MeshScene):
         Add a dataset to the scene. create mapper/actor 
         returns mesh_id
         """
+        self._log.info(f"[VTKScene] add_dataset: {name} type={type(dataset)}")
         # Mapper
         mapper = vtk.vtkDataSetMapper()
         mapper.SetInputData(dataset)
@@ -65,7 +67,7 @@ class VTKScene(MeshScene):
         r, g, b = next(self.color_cycle)
         actor.GetProperty().SetColor(r, g, b)
         actor.GetProperty().SetOpacity(1.0)  # fully opaque
-        actor.GetProperty().SetEdgeVisibilityOff()  # no edges
+        #actor.GetProperty().SetEdgeVisibilityOff()  # no edges
         actor.SetVisibility(1)
 
         self._renderer.AddActor(actor)  # visible by default

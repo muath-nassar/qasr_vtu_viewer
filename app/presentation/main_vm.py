@@ -9,6 +9,7 @@ from PySide6.QtWidgets import QFileDialog, QMessageBox
 from app.application.load_mesh import LoadMesh
 from app.application.set_visibility import SetVisibility
 from app.domain.types import MeshRef
+from app.domain.ports import Logger
 
 
 class MainViewModel(QObject):
@@ -17,11 +18,13 @@ class MainViewModel(QObject):
     errorOccurred = Signal(str)
 
     def __init__(self,
+                log: Logger,
                 import_meshes: ImportMeshes,
                 load_mesh: LoadMesh,
                 set_visibility: SetVisibility,
                 fit_view_all: FitViewAll) -> None:
         super().__init__()
+        self._log = log
         self._import_meshes = import_meshes
         self._load_mesh = load_mesh
         self._set_visibility = set_visibility
@@ -30,7 +33,7 @@ class MainViewModel(QObject):
         # ---- UI related variables -------
         self._meshes_ref: List[MeshRef] = []
         self._state = ""
-        self.meshs_ids: Dict[str, str] = {} # path -> mesh_id
+        self._meshs_ids: Dict[str, str] = {} # path -> mesh_id
 
     # ---- state management strat-------
     def _get_state(self) -> str:
@@ -58,34 +61,35 @@ class MainViewModel(QObject):
     def get_files(self, dir_path: str) -> None:
         try:
             meshes = self._import_meshes.run(dir_path)
-            self._meshes_ref.extend(m for m in meshes if m not in self._meshes_ref)
+            if not meshes:
+                self._show_state("No .vtu files found in selection")
+                self.errorOccurred.emit("No .vtu files found in selection")
+                self.changed.emit()
+                return
+
+            for m in meshes:
+                try:
+                    self._register_mesh_to_scene(m)
+                    self._meshes_ref.append(m)
+                    self.changed.emit()
+                except Exception as e:
+                    self._log.error(f"[VM] failed to register mesh: {m.name} error: {e}")
+                    self._show_state(f"Error registering mesh: {m.name}")
+
+            files_loaded = [m.path for m in self._meshes_ref]
+            self._show_state(f"files = {files_loaded} are loaded")
+
         except Exception as exc:
             print(f"[VM][ERROR] get_files failed: {exc}")
             self._show_state(f"Error loading files: {exc}")
             self.errorOccurred.emit("Error in loading files. \n Only folders or .vtu files are allowed.")
-        else:
-            files_loaded = [m.path for m in self._meshes_ref]
-            if len(files_loaded) == 0:
-                self._show_state("No .vtu files found in selection")
-                self.errorOccurred.emit("No .vtu files found in selection")
-            else:
-                self._show_state(f"files = {files_loaded} are loaded")
-        finally:
-            self.changed.emit()
 
-    def _append_meshes(self, refs: List[MeshRef]) -> None:
-        existing: Set[MeshRef] = {m.path for m in self._meshes_ref}
-        new_meshes: List[MeshRef] = []
-        for m in refs:
-            if m.path in existing:
-                continue
-            # register in the scene
-            mesh_id = self._load_mesh.run(m.path, m.name)
-            self.meshs_ids[m.path] = mesh_id
-            new_meshes.append(m)
-        if new_meshes:
-            self._meshes_ref.extend(new_meshes)
-            self.changed.emit()
+    def _register_mesh_to_scene(self, ref: MeshRef) -> None:
+        self._log.info(f"[VM] registering mesh: {ref.name}")
+        mesh_id = self._load_mesh.run(ref.path, ref.name)
+        self._meshs_ids[ref.path] = mesh_id
+
+ 
 
 
 # --------- slots ---------------
@@ -117,10 +121,10 @@ class MainViewModel(QObject):
 
     @Slot(int, bool)
     def toggleVisible(self, index: int, on: bool) -> None:
-        if index < 0 or index >= len(self._meshes):
+        if index < 0 or index >= len(self._meshes_ref):
             return
-        ref = self._meshes[index]
-        mesh_id = self._mesh_ids.get(ref.path)
+        ref = self._meshes_ref[index]
+        mesh_id = self._meshs_ids.get(ref.path)
         if mesh_id:
             self._set_visibility.run(mesh_id, on)
 

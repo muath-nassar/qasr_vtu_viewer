@@ -47,6 +47,7 @@ ApplicationWindow {
             anchors.fill: parent
             spacing: 6
             Button { text: "Import VTU file"; onClicked: vm.show_dialog() }
+            Button { text: "fit all"; onClicked: vm.fitAll() }
             Item   { Layout.fillWidth: true }
             Button { text: "Import folder";   onClicked: vm.load_folder(folderPath.text) }
             TextField {
